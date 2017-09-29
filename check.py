@@ -1,12 +1,13 @@
 #!/usr/local/bin/python3
 
 import time
-
+import os
+print('\nVersion 0.2')
 curtime = time.strftime("%Y-%m-%d")
-print('\n#############################################################################################')
-print('#\t-This is a program that will take the IVR log located in * and open / read it to      \t#\n#\toutput successful IVR connections and count the total number of connections per Plan. \t#')
-print('#\t-The program goes from the beginning of the specified month, to the end.\t\t\t\t#')
-print('#############################################################################################\n')
+print('\n###########################################################################################')
+print('    -This is a program that will take the IVR log located in * and open / read it to      \t\n    output successful IVR connections and count the total number of connections per Plan. \t')
+print('    -The program goes from the beginning of the specified month, to the end.\t\t\t\t')
+print('###########################################################################################\n')
 print('----------EXAMPLE----------')
 print('[YEAR]: 2017')
 print('[STARTING MONTH]: 8\t *This is for if we want to start the batch in August(8)')
@@ -15,8 +16,8 @@ print('--------END EXAMPLE--------\n')
 x = input('[YEAR]: ')
 y = input('[STARTING MONTH]: ')
 z = input('[ENDING MONTH]: ')
-filelocation = '/Volumes/Shared/Andrew/IVR_USAGE/kandglog_20130829.txt'
-savelocation = '/Volumes/Shared/Andrew/IVR_USAGE/logs/'
+filelocation = '/Volumes/Shared/Apps/IVR_USAGE/output/kandglog_20130829.txt'
+savelocation = '/Volumes/Shared/Apps/IVR_USAGE/logs/'
 holder = []
 final = []
 success = 0
@@ -69,7 +70,7 @@ def timeframe():
 
 
 def output(export):
-    name = str(curtime) + '-IVR-output''.txt'
+    name = str(curtime) + '-IVR-output.txt'
     print('Output saved to: ' + savelocation + name)
     file = open(savelocation + name, 'w')
     for line in export:
@@ -102,8 +103,8 @@ def tally():
                 plans.append(ids)
         count += 1
     plans.sort()
-    number = 0
     totalcount = 0
+    number = 0
     while number < len(plans):
         data.append('# of [' + str(plans[number]) + '] uses = ' + str(total.count(str(plans[number]))))
         print('# of [' + str(plans[number]) + '] uses = ' + str(total.count(str(plans[number]))))
@@ -111,10 +112,11 @@ def tally():
         number += 1
     print('TOTAL= ' + str(totalcount))
     output(holder)
+    return totalcount
 
 
-def log():
-    print('Creating Log File...')
+def log(tallytotal):
+    print('Log saved to:' + savelocation + curtime + '.txt')
     count = 0
     file = open(savelocation + curtime + '.txt', 'a')
     file.write('Year Specified: [' + str(x) + ']\n')
@@ -123,13 +125,25 @@ def log():
     while count < len(data):
         file.write(str(data[count] + '\n'))
         count += 1
+    file.write('\nTotal: [' + str(tallytotal) + ']\n')
     file.close()
+
+
+def finalask():
+    asks = input('Would you like to open the output files? (y/n) : ')
+    print(str(asks))
+    if str(asks) is 'y':
+        os.system('open /Volumes/Shared/Apps/IVR_USAGE/logs/' + str(curtime) + '.txt')
+        os.system('open /Volumes/Shared/Apps/IVR_USAGE/logs/' + str(curtime) + '-IVR-output.txt')
+    else:
+        print('[DONE]')
 
 timeframe()
 doublecheck()
-tally()
-log()
-
+log(tally())
+#finalask()
+os.system('open /Volumes/Shared/Apps/IVR_USAGE/logs/' + str(curtime) + '.txt')
+# os.system('open /Volumes/Shared/Apps/IVR_USAGE/logs/' + str(curtime) + '-IVR-output.txt')
 
 
 
