@@ -1,8 +1,7 @@
-#!/usr/local/bin/python3
+
 
 import time
-import os
-print('\nVersion 0.2')
+
 curtime = time.strftime("%Y-%m-%d")
 print('\n###########################################################################################')
 print('    -This is a program that will take the IVR log located in * and open / read it to      \t\n    output successful IVR connections and count the total number of connections per Plan. \t')
@@ -16,17 +15,21 @@ print('--------END EXAMPLE--------\n')
 x = input('[YEAR]: ')
 y = input('[STARTING MONTH]: ')
 z = input('[ENDING MONTH]: ')
-filelocation = '/Volumes/Shared/Apps/IVR_USAGE/output/kandglog_20130829.txt'
-savelocation = '/Volumes/Shared/Apps/IVR_USAGE/logs/'
+filelocation = '/Volumes/Shared/Andrew/Apps/IVR_USAGE/output/kandglog_20130829.txt'
+savelocation = '/Volumes/Shared/Andrew/Apps/IVR_USAGE/logs/'
 holder = []
 final = []
 success = 0
+hour = ''
+minute = ''
+hourminute = [0]*24
+hours = list(range(24))
 plans = []
 total = []
 data = []
-print(x, y, z)
+display = []
 
-print('Opening File')
+print('\nOpening File\n')
 
 with open(filelocation) as a:
     storage = a.readlines()
@@ -49,9 +52,7 @@ def success_check(place):
 
 
 def date_check(month):
-    print('Adjusting for dates entered')
     count = 0
-    print('Month: ' + month)
     while count < len(storage):
         if 'kgaSuccess' in storage[count] and str(x) + '-' + str(month) in storage[count]:
             holder.append(storage[count - 1])
@@ -70,8 +71,8 @@ def timeframe():
 
 
 def output(export):
-    name = str(curtime) + '-IVR-output.txt'
-    print('Output saved to: ' + savelocation + name)
+    name = str(curtime) + '-IVR-output''.txt'
+    print('\nOutput saved to: \t\t' + savelocation + name)
     file = open(savelocation + name, 'w')
     for line in export:
         b = str(line)
@@ -89,14 +90,35 @@ def doublecheck():
             holder.pop(count + 1)
             numberRemoved += 1
         count += 1
-    print('# Removed: ' + str(numberRemoved))
+    print('# Removed: ' + str(numberRemoved) + '\n')
 
 
 def tally():
     count = 0
+    hold = 0
+    tallys = 1
+    file = open(savelocation + str(curtime) + '-TOTAL.csv', 'w')
     while count < len(holder):
         if 'PlanID=' in holder[count]:
             location = str(holder[count]).find('=')
+            month = str(holder[count][5])+str(holder[count][6])
+            day = holder[count][8:10]
+            timestamp(count)
+            when = (str(month) + ('-' + (str(day))))
+            if len(display) >= 2:
+                line = display[hold - 1]
+                oldwhen = str(line[0:5])
+                if str(oldwhen) == str(when):
+                    tallys += 1
+                else:
+                    display.append(str(when) + ',' + str(tallys))
+                    file.write(str(when) + ',' + str(tallys) + '\n')
+                    tallys = 1
+                    hold += 1
+            if len(display) <= 1:
+                display.append(when)
+                file.write(str(when) + '\n')
+                hold += 1
             ids = (str(holder[count])[location + 1:location + 4])
             total.append(ids)
             if ids not in plans:
@@ -110,15 +132,17 @@ def tally():
         print('# of [' + str(plans[number]) + '] uses = ' + str(total.count(str(plans[number]))))
         totalcount += total.count(str(plans[number]))
         number += 1
-    print('TOTAL= ' + str(totalcount))
+    print('\nTOTAL= ' + str(totalcount))
     output(holder)
-    return totalcount
+    file.close()
+    print('Total Usage saved to: \t' + savelocation + curtime + '-TOTAL.csv')
+    return display
 
 
 def log(tallytotal):
-    print('Log saved to:' + savelocation + curtime + '.txt')
+    print('Log saved to: \t\t\t' + savelocation + curtime + '.txt')
     count = 0
-    file = open(savelocation + curtime + '.txt', 'a')
+    file = open(savelocation + curtime + '.txt', 'w')
     file.write('Year Specified: [' + str(x) + ']\n')
     file.write('Batch Start Specified: [' + str(y) + ']\n')
     file.write('Batch End Specified: [' + str(z) + ']\n\n')
@@ -129,21 +153,27 @@ def log(tallytotal):
     file.close()
 
 
-def finalask():
-    asks = input('Would you like to open the output files? (y/n) : ')
-    print(str(asks))
-    if str(asks) is 'y':
-        os.system('open /Volumes/Shared/Apps/IVR_USAGE/logs/' + str(curtime) + '.txt')
-        os.system('open /Volumes/Shared/Apps/IVR_USAGE/logs/' + str(curtime) + '-IVR-output.txt')
-    else:
-        print('[DONE]')
+def timestamp(count):
+    hour = int(holder[count][11:13])
+    hourminute[hour] = hourminute[hour] + 1
+
+
+def csv():
+    file = open(savelocation + curtime + '-HOURLY.csv', 'w')
+    for line in hours:
+        file.write(str(hours[line]) + ',' + str(hourminute[line]) + '\n')
+    file.close()
+    print('Hourly saved to: \t\t' + savelocation + curtime + '-HOURLY.csv')
+
+
+
+
 
 timeframe()
 doublecheck()
 log(tally())
-#finalask()
-os.system('open /Volumes/Shared/Apps/IVR_USAGE/logs/' + str(curtime) + '.txt')
-# os.system('open /Volumes/Shared/Apps/IVR_USAGE/logs/' + str(curtime) + '-IVR-output.txt')
+csv()
+
 
 
 
